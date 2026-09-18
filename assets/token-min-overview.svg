@@ -15,81 +15,85 @@
   <!-- Title -->
   <text x="40" y="52" fill="#fff" font-size="34" font-weight="700">open</text>
   <text x="162" y="52" fill="#7aa2f7" font-size="34" font-weight="700">token-min</text>
-  <text x="40" y="80" fill="#8b90a5" font-size="16">cache-aware context trimming plugin for opencode · the "Context" box, but honest</text>
+  <text x="40" y="80" fill="#8b90a5" font-size="16">cache-aware context trimming plugin for opencode · the &quot;Context&quot; box, but honest</text>
   <rect x="40" y="94" width="1120" height="2" rx="1" fill="#2a2e3f"/>
 
-  <!-- LEFT: before/after pipeline -->
-  <rect x="40" y="120" width="520" height="320" rx="12" fill="url(#box)" stroke="#2a2e3f"/>
+  <!-- LEFT: pipeline -->
+  <rect x="40" y="120" width="520" height="330" rx="12" fill="url(#box)" stroke="#2a2e3f"/>
   <text x="62" y="152" fill="#7aa2f7" font-size="16" font-weight="700">what it does</text>
 
-  <!-- before -->
-  <rect x="60" y="170" width="240" height="120" rx="8" fill="none" stroke="#4a4f66" stroke-dasharray="4 3"/>
-  <text x="74" y="192" fill="#9aa0b5" font-size="12">BEFORE · each step</text>
-  <text x="74" y="214" fill="#e8eaf2" font-size="13">100k+ chars of context</text>
-  <text x="74" y="234" fill="#8b90a5" font-size="12">sys + all msgs + tool dumps</text>
-  <text x="74" y="254" fill="#8b90a5" font-size="12">re-sent on every step</text>
-  <text x="74" y="278" fill="#f7768e" font-size="13" font-weight="700">cost grows per step</text>
+  <!-- BEFORE -->
+  <rect x="60" y="164" width="496" height="60" rx="8" fill="none" stroke="#4a4f66" stroke-dasharray="4 3"/>
+  <text x="74" y="186" fill="#e8eaf2" font-size="13" font-weight="700">BEFORE · every step re-sends + re-bills all of history</text>
+  <text x="74" y="206" fill="#8b90a5" font-size="12">100k+ chars · sys + every message + tool dumps</text>
 
-  <!-- arrow -->
-  <polygon points="306,238 316,244 306,250" fill="#5d6478"/>
+  <!-- arrow down -->
+  <polygon points="296,232 308,242 296,252" fill="#5d6478"/>
 
-  <!-- plugin box -->
-  <rect x="322" y="170" width="110" height="120" rx="8" fill="#1c2333" stroke="#7aa2f7"/>
-  <text x="341" y="210" fill="#7aa2f7" font-size="12" font-weight="700">transform</text>
-  <text x="341" y="228" fill="#e8eaf2" font-size="12">trim + digest</text>
-  <text x="341" y="246" fill="#8b90a5" font-size="11">cache-aware</text>
-  <text x="341" y="264" fill="#8b90a5" font-size="11">token budgets</text>
-  <text x="341" y="282" fill="#9ece6a" font-size="11">~saved tracked</text>
+  <!-- transform plugin -->
+  <rect x="60" y="242" width="496" height="108" rx="8" fill="#1c2333" stroke="#7aa2f7"/>
+  <text x="74" y="264" fill="#7aa2f7" font-size="13" font-weight="700">transform · one hook before every model call</text>
 
-  <!-- arrow -->
-  <polygon points="438,238 448,244 438,250" fill="#5d6478"/>
+  <rect x="70" y="272" width="158" height="68" rx="6" fill="#12151f" stroke="#3a3f5a"/>
+  <text x="84" y="292" fill="#e8eaf2" font-size="12" font-weight="700">trim</text>
+  <text x="84" y="310" fill="#8b90a5" font-size="11">per-role budgets</text>
+  <text x="84" y="326" fill="#8b90a5" font-size="11">history + tail caps</text>
 
-  <!-- after -->
-  <rect x="454" y="170" width="200" height="120" rx="8" fill="none" stroke="#4a4f66"/>
-  <text x="468" y="192" fill="#9aa0b5" font-size="12">AFTER · same step</text>
-  <text x="468" y="214" fill="#e8eaf2" font-size="13">small, digest-only context</text>
-  <text x="468" y="234" fill="#9ece6a" font-size="13" font-weight="700">80–99% fewer tokens</text>
-  <text x="468" y="254" fill="#9ece6a" font-size="13" font-weight="700">halt the runaway bill</text>
-  <text x="468" y="278" fill="#8b90a5" font-size="12">tool outputs → short digests</text>
+  <rect x="236" y="272" width="158" height="68" rx="6" fill="#12151f" stroke="#3a3f5a"/>
+  <text x="250" y="292" fill="#e8eaf2" font-size="12" font-weight="700">digest</text>
+  <text x="250" y="310" fill="#8b90a5" font-size="11">oversized tool dumps</text>
+  <text x="250" y="326" fill="#8b90a5" font-size="11">keep tail useful</text>
 
-  <rect x="60" y="305" width="480" height="1" fill="#2a2e3f"/>
-  <text x="62" y="330" fill="#8b90a5" font-size="12">always-on ledger →</text>
-  <rect x="62" y="344" width="250" height="74" rx="8" fill="none" stroke="#4a4f66"/>
-  <text x="76" y="366" fill="#9aa0b5" font-size="11">token-usage.jsonl</text>
-  <text x="76" y="384" fill="#e8eaf2" font-size="11">per-task cost · tokens · est saved</text>
-  <text x="76" y="402" fill="#8b90a5" font-size="11">read by the sidebar + /cost</text>
+  <rect x="402" y="272" width="144" height="68" rx="6" fill="#12151f" stroke="#3a3f5a"/>
+  <text x="416" y="292" fill="#e8eaf2" font-size="12" font-weight="700">cached</text>
+  <text x="416" y="310" fill="#8b90a5" font-size="11">cache-aware caps</text>
+  <text x="416" y="326" fill="#8b90a5" font-size="11">never break warm</text>
 
-  <rect x="330" y="344" width="210" height="74" rx="8" fill="none" stroke="#4a4f66"/>
-  <text x="344" y="366" fill="#9aa0b5" font-size="11">tool:cost</text>
-  <text x="344" y="384" fill="#e8eaf2" font-size="11">session · today · all-time</text>
-  <text x="344" y="402" fill="#8b90a5" font-size="11">right menu + prompt tool</text>
+  <text x="74" y="340" fill="#9ece6a" font-size="11">~saved tracked per step →</text>
 
-  <!-- RIGHT: sidebar screenshot -->
+  <!-- arrow down -->
+  <polygon points="296,358 308,368 296,378" fill="#5d6478"/>
+
+  <!-- AFTER -->
+  <rect x="60" y="368" width="496" height="64" rx="8" fill="none" stroke="#9ece6a"/>
+  <text x="74" y="390" fill="#9ece6a" font-size="14" font-weight="700">AFTER · digest-only context</text>
+  <text x="74" y="410" fill="#9ece6a" font-size="13" font-weight="700">80–99% fewer tokens per task — the guide goal</text>
+  <text x="74" y="424" fill="#8b90a5" font-size="11">tool outputs → short digests · cache respected</text>
+
+  <!-- RIGHT: sidebar -->
   <rect x="600" y="120" width="560" height="330" rx="12" fill="url(#box)" stroke="#2a2e3f"/>
   <text x="622" y="152" fill="#7aa2f7" font-size="16" font-weight="700">what you see</text>
 
   <!-- sidebar box -->
-  <rect x="620" y="170" width="380" height="262" rx="10" fill="#12151f" stroke="#7aa2f7"/>
-  <text x="640" y="196" fill="#ffffff" font-size="13" font-weight="700">Context</text>
-  <line x1="620" y1="210" x2="1000" y2="210" stroke="#232738"/>
-  <text x="640" y="234" fill="#e8eaf2" font-size="14">8,460 tokens</text>
-  <text x="640" y="260" fill="#9ece6a" font-size="13">7% used</text>
-  <text x="640" y="286" fill="#e5c07b" font-size="13">$1.23 spent</text>
-  <text x="640" y="312" fill="#7aa2f7" font-size="13">~18,240 tokens saved</text>
-  <text x="640" y="338" fill="#9ece6a" font-size="13">88% saved</text>
-  <text x="640" y="364" fill="#f7768e" font-size="13">~5,030 tokens saved · last task</text>
-  <text x="640" y="396" fill="#8b90a5" font-size="11">session vs the last task you ran</text>
-  <text x="640" y="416" fill="#8b90a5" font-size="11">(the two numbers you actually wanted)</text>
+  <rect x="620" y="164" width="376" height="248" rx="10" fill="#12151f" stroke="#7aa2f7"/>
+  <text x="640" y="190" fill="#ffffff" font-size="14" font-weight="700">Context</text>
+  <line x1="620" y1="202" x2="996" y2="202" stroke="#232738"/>
+
+  <text x="640" y="230" fill="#e8eaf2" font-size="14">8,460 tokens</text>
+  <text x="640" y="256" fill="#9ece6a" font-size="13">7% used</text>
+  <text x="640" y="282" fill="#e5c07b" font-size="13">$1.23 spent</text>
+  <text x="640" y="308" fill="#7aa2f7" font-size="13">~18,240 tokens saved</text>
+  <text x="640" y="334" fill="#9ece6a" font-size="13">88% saved</text>
+  <text x="640" y="360" fill="#f7768e" font-size="13">~5,030 tokens saved · last task</text>
+  <text x="640" y="384" fill="#8b90a5" font-size="11">session vs the last task you ran</text>
+  <text x="640" y="400" fill="#8b90a5" font-size="11">(the two numbers you actually wanted)</text>
 
   <!-- right annotation -->
-  <text x="1020" y="240" fill="#8b90a5" font-size="11">real usage, live</text>
-  <text x="1020" y="258" fill="#8b90a5" font-size="11">right sidebar box</text>
-  <line x1="1002" y1="246" x2="1020" y2="246" stroke="#5d6478"/>
+  <line x1="1002" y1="230" x2="1024" y2="230" stroke="#5d6478"/>
+  <text x="1030" y="226" fill="#8b90a5" font-size="12">real usage, live</text>
+  <text x="1030" y="244" fill="#8b90a5" font-size="12">right-sidebar box</text>
+
+  <!-- footer chips -->
+  <rect x="620" y="422" width="250" height="26" rx="6" fill="#12151f" stroke="#3a3f5a"/>
+  <text x="632" y="439" fill="#8b90a5" font-size="11">ledger · token-usage.jsonl (per-task)</text>
+
+  <rect x="880" y="422" width="260" height="26" rx="6" fill="#12151f" stroke="#3a3f5a"/>
+  <text x="892" y="439" fill="#8b90a5" font-size="11">tool:cost · session / today / all-time</text>
 
   <!-- BOTTOM: goal strip -->
   <rect x="40" y="470" width="1120" height="240" rx="12" fill="url(#box)" stroke="#2a2e3f"/>
-  <text x="62" y="502" fill="#7aa2f7" font-size="16" font-weight="700">goal · the awesome LLM token optimization guide</text>
-  <text x="62" y="530" fill="#e8eaf2" font-size="14">re-cut what you re-send until "costs stay flat" is a habit, not a shock</text>
+  <text x="62" y="502" fill="#7aa2f7" font-size="16" font-weight="700">goal · the awesome LLM token-optimization guide</text>
+  <text x="62" y="530" fill="#e8eaf2" font-size="14">re-cut what you re-send until &quot;costs stay flat&quot; is a habit, not a shock</text>
 
   <!-- 3 stat chips -->
   <rect x="62" y="552" width="340" height="110" rx="10" fill="#12151f" stroke="#4a4f66"/>
@@ -99,8 +103,8 @@
 
   <rect x="420" y="552" width="340" height="110" rx="10" fill="#12151f" stroke="#4a4f66"/>
   <text x="440" y="580" fill="#f7768e" font-size="26" font-weight="700">~$0</text>
-  <text x="440" y="604" fill="#9aa0b5" font-size="13">grows for re-sent history</text>
-  <text x="440" y="626" fill="#8b90a5" font-size="12">before the plugin existed</text>
+  <text x="440" y="604" fill="#9aa0b5" font-size="13">stays for re-sent history</text>
+  <text x="440" y="626" fill="#8b90a5" font-size="12">0 until it trims</text>
 
   <rect x="778" y="552" width="362" height="110" rx="10" fill="#12151f" stroke="#4a4f66"/>
   <text x="798" y="580" fill="#7aa2f7" font-size="26" font-weight="700">one plugin</text>
