@@ -1,0 +1,13 @@
+# node_modules
+node_modules/
+*.tsbuildinfo
+
+# runtime data
+data/
+*.jsonl
+
+# local env
+.env.local
+
+# OS/editor
+.DS_Store

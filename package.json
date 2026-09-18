@@ -1,0 +1,13 @@
+{
+  "name": "opencode-token-min",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cache-aware context trimming plugin for opencode — stop long sessions from re-billing your whole history every step.",
+  "devDependencies": {
+    "@opencode-ai/plugin": "latest",
+    "@opencode-ai/sdk": "latest",
+    "solid-js": "latest",
+    "react": "latest"
+  }
+}
