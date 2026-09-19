@@ -1,4 +1,3 @@
-import type { AssistantMessage } from "@opencode-ai/sdk/v2"
 import type { TuiPlugin } from "@opencode-ai/plugin/tui"
 import { createMemo, createSignal } from "solid-js"
 import { readFileSync, existsSync } from "node:fs"
@@ -15,7 +14,7 @@ interface LedgerRow {
   sessionID: string
   taskID?: string
   messageID: string
-  tokens: { input?: number; output?: number; reasoning?: number; estSaved?: number }
+  tokens: { input?: number; output?: number; reasoning?: number; estSaved?: number; beforeTok?: number; afterTok?: number }
 }
 
 function ledgerPath(): string {
@@ -31,10 +30,10 @@ function ledgerPath(): string {
   return path.join(base, "token-usage.jsonl")
 }
 
-function sessionSaved(sessionID: string): { saved: number; lastTask: number; rows: number; latest?: LedgerRow } {
+function sessionSaved(sessionID: string): { saved: number; before: number; after: number; lastTask: number; lastBefore: number; rows: number } {
   try {
     const file = ledgerPath()
-    if (!existsSync(file)) return { saved: 0, lastTask: 0, rows: 0 }
+    if (!existsSync(file)) return { saved: 0, before: 0, after: 0, lastTask: 0, lastBefore: 0, rows: 0 }
     const rows = readFileSync(file, "utf8")
       .split("\n")
       .filter(Boolean)
@@ -47,18 +46,28 @@ function sessionSaved(sessionID: string): { saved: number; lastTask: number; row
       })
       .filter((x): x is LedgerRow => !!x && x.sessionID === sessionID)
     let saved = 0
-    for (const row of rows) saved += row.tokens.estSaved ?? 0
+    let before = 0
+    let after = 0
+    for (const row of rows) {
+      saved += row.tokens.estSaved ?? 0
+      before += row.tokens.beforeTok ?? 0
+      after += row.tokens.afterTok ?? 0
+    }
     const last = rows[rows.length - 1]
     const lastTaskID = last?.taskID ?? last?.messageID
     let lastTask = 0
+    let lastBefore = 0
     if (lastTaskID) {
       for (const row of rows) {
-        if ((row.taskID ?? row.messageID) === lastTaskID) lastTask += row.tokens.estSaved ?? 0
+        if ((row.taskID ?? row.messageID) === lastTaskID) {
+          lastTask += row.tokens.estSaved ?? 0
+          lastBefore += row.tokens.beforeTok ?? 0
+        }
       }
     }
-    return { saved, lastTask, rows: rows.length, latest: last }
+    return { saved, before, after, lastTask, lastBefore, rows: rows.length }
   } catch {
-    return { saved: 0, lastTask: 0, rows: 0 }
+    return { saved: 0, before: 0, after: 0, lastTask: 0, lastBefore: 0, rows: 0 }
   }
 }
 
@@ -73,24 +82,16 @@ const tui: TuiPlugin = async (api) => {
     slots: {
       sidebar_content(_ctx, props) {
         const theme = () => api.theme.current
-        const msg = createMemo(() => api.state.session.messages(props.session_id))
         const session = createMemo(() => api.state.session.get(props.session_id))
         const cost = createMemo(() => session()?.cost ?? 0)
-
-        const tokens = createMemo(() => {
-          const last = msg().findLast((item): item is AssistantMessage => item.role === "assistant" && item.tokens.output > 0)
-          if (!last) {
-            return 0
-          }
-          return (
-            last.tokens.input + last.tokens.output + last.tokens.reasoning + last.tokens.cache.read + last.tokens.cache.write
-          )
-        })
 
         const saved = createMemo(() => {
           version()
           return sessionSaved(props.session_id)
         })
+
+        const pct = (savedVal: number, before: number) =>
+          before > 0 ? Math.min(100, Math.round((savedVal / before) * 100)) : 0
 
         return (
           <box>
@@ -99,13 +100,13 @@ const tui: TuiPlugin = async (api) => {
           </text>
             <text fg={theme().textMuted}>~{saved().saved.toLocaleString()} tokens saved</text>
             <text fg={theme().textMuted}>
-              {Math.round((saved().saved / Math.max(saved().saved + tokens(), 1)) * 100)}% saved
+              {pct(saved().saved, saved().before)}% saved
             </text>
             <text fg={theme().textMuted}>
               ~{saved().lastTask.toLocaleString()} tokens saved · last task
             </text>
             <text fg={theme().textMuted}>
-             {Math.round((saved().lastTask / Math.max(saved().lastTask + tokens(), 1)) * 100)}% saved
+              {pct(saved().lastTask, saved().lastBefore)}% saved
             </text>
           </box>
         )

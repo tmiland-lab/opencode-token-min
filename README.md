@@ -67,6 +67,17 @@ every single step:
 
 ## 🚀 Quick start
 
+**One-liner from npm** (installs the server + TUI side by side and registers
+them in both `opencode.json` and `tui.json` — nothing to copy by hand):
+
+```bash
+opencode plugin opencode-token-min --global
+#   → adds "opencode-token-min" to your config's plugin array
+#   → later updates: opencode plugin opencode-token-min --global --force
+```
+
+Prefer the source version? Then it's the same manual copy:
+
 ```bash
 mkdir -p ~/.config/opencode/plugins ~/.config/opencode/tui
 
@@ -80,9 +91,9 @@ cp tui/token-min.tsx      ~/.config/opencode/tui/
 cp tui.json               ~/.config/opencode/tui.json
 # note: if you already have a tui.json (e.g. other TUI plugins), merge the
 # "plugin" arrays instead of overwriting it.
-
-# restart opencode, or just /tui --dev to hot-reload the sidebar
 ```
+
+Either way: restart opencode, or just `/tui --dev` to hot-reload the sidebar.
 
 **Zero config.** Sanely conservative defaults. Everything is tunable via the
 constants at the top of `plugins/token-min.ts`:
@@ -167,9 +178,10 @@ in the TUI status area above the chat field when enabled.)
 | `8,460 tokens` | tokens in the *last* step, as the API reports them |
 | `7% used` | side panel heading as stock opencode |
 | `$1.23 spent` | cost of the last step (if the provider reports it) |
-| `~18,240 tokens saved` | cumulative est. tokens not re-sent, from the ledger |
-| `88% saved` | saved ÷ (saved + sent), the honest ratio |
-| `~5,030 tokens saved · last task` | savings from the *most recent task only* |
+| `~3,063,221 tokens saved` | cumulative est. tokens not re-sent, from the ledger |
+| `81% saved` | ΣestSaved ÷ ΣbeforeTok across the session — e.g. 9,852,160 of 12,235,272 (live 7kg47KC0 session) |
+| `~622,254 tokens saved · last task` | savings from the *most recent task only* |
+| `93% saved` | same formula, but for the last task's own rows (lestSaved ÷ lastBeforeTok) |
 
 ```bash
 $ opencode /tui --dev     # hot-reload the sidebar while you tweak
@@ -195,9 +207,14 @@ every keystroke; the trimmed case only pays for what actually changed.
 
 ## ⚠️ Caveats
 
-* **Estimates, not invoices.** trimmed savings use a chars→token heuristic and
-  a tool-digest heuristic; cache-read tokens come straight from the provider.
-  Numbers are for *watching the trend*, not for accounting.
+* **Usage and cost are provider-truth; savings are an estimate.** The `input` /
+  `output` / `reasoning` / `cacheRead` / `cacheWrite` tokens and the `$` figure
+  are copied verbatim from the provider's step-finish report — the same numbers
+  an invoice would be based on. Only what the sidebar calls *saved* is an
+  estimate: there is no invoice for tokens you *didn't* re-send, so the plugin
+  measures the context before vs. after trimming (`chars ÷ 4`, conservative
+  upper bound, floored at 0). That part is for *watching the trend*; the usage
+  and `$` columns are for *accounting*.
 * **The default (`auto`) trims from day one.** If you want to *measure first*,
   set `MODE = "watch"` — nothing is touched until you opt in with `trim` /
   `cached`.
@@ -232,3 +249,11 @@ bun build plugins/token-min.ts --outdir /tmp/token-min-build   # syntax check
 ## License
 
 [MIT](LICENSE) — do whatever, keep the name.
+
+---
+
+<div align="center">
+
+*Built by Big Pickle, directed by the boss.*
+
+</div>

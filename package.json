@@ -1,9 +1,54 @@
 {
   "name": "opencode-token-min",
   "version": "1.0.0",
-  "private": true,
   "type": "module",
+  "license": "MIT",
   "description": "Cache-aware context trimming plugin for opencode — stop long sessions from re-billing your whole history every step.",
+  "keywords": [
+    "opencode",
+    "plugin",
+    "token",
+    "context",
+    "trimming",
+    "prompt-caching",
+    "cost"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tmiland-lab/opencode-token-min.git"
+  },
+  "homepage": "https://github.com/tmiland-lab/opencode-token-min",
+  "exports": {
+    ".": {
+      "types": "./src/server.ts",
+      "import": "./src/server.ts"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "import": "./src/server.ts"
+    },
+    "./tui": {
+      "types": "./tui/token-min.tsx",
+      "import": "./tui/token-min.tsx"
+    }
+  },
+  "files": [
+    "src",
+    "plugins",
+    "tui",
+    "assets",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "check": "bun build --target=bun src/server.ts --outdir /tmp/b && bun build --target=bun tui/token-min.tsx --outdir /tmp/b"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.18.0"
+  },
+  "dependencies": {
+    "solid-js": "^1.9.12"
+  },
   "devDependencies": {
     "@opencode-ai/plugin": "latest",
     "@opencode-ai/sdk": "latest",
