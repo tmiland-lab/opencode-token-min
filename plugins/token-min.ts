@@ -23,6 +23,7 @@ const MAX_TOTAL_CACHED = num("TOKEN_MIN_MAX_TOTAL_CACHED", 60)
 const PRESERVE_FIRST = num("TOKEN_MIN_PRESERVE_FIRST", 3)
 const MIN_KEEP = num("TOKEN_MIN_MIN_KEEP", 2)
 const OLD_MULT = num("TOKEN_MIN_OLD_MULT", 2)
+const CACHED_MULT = num("TOKEN_MIN_CACHED_MULT", Math.max(1, Math.round(MAX_TOTAL_CACHED / MAX_TOTAL)))
 const CHARS_PER_TOKEN = num("TOKEN_MIN_CHARS_PER_TOKEN", 4)
 const KEEP_TAIL_MSGS = num("TOKEN_MIN_KEEP_TAIL_MSGS", 4)
 const TOOL_DIGEST_BYTES = num("TOKEN_MIN_TOOL_DIGEST_BYTES", 4000)
@@ -55,6 +56,8 @@ interface StepTokens {
   cacheRead: number
   cacheWrite: number
   estSaved: number
+  beforeTok: number
+  afterTok: number
 }
 
 interface StepRecord {
@@ -112,6 +115,8 @@ function addTokens(a: StepTokens, b: StepTokens): StepTokens {
     cacheRead: a.cacheRead + b.cacheRead,
     cacheWrite: a.cacheWrite + b.cacheWrite,
     estSaved: a.estSaved + b.estSaved,
+    beforeTok: a.beforeTok + b.beforeTok,
+    afterTok: a.afterTok + b.afterTok,
   }
 }
 
@@ -124,7 +129,7 @@ const sessionTools = new Map<string, Set<string>>()
 const sessionTotals = new Map<string, { cost: number; tokens: StepTokens }>()
 const sessionTaskID = new Map<string, string | undefined>()
 
-const zeroTokens = (): StepTokens => ({ input: 0, output: 0, reasoning: 0, cacheRead: 0, cacheWrite: 0, estSaved: 0 })
+const zeroTokens = (): StepTokens => ({ input: 0, output: 0, reasoning: 0, cacheRead: 0, cacheWrite: 0, estSaved: 0, beforeTok: 0, afterTok: 0 })
 
 function sessionTotal(sessionID: string) {
   return sessionTotals.get(sessionID) ?? { cost: 0, tokens: zeroTokens() }
@@ -236,26 +241,20 @@ function trimMessages(sessionID: string, messages: { info: { role: string }; par
     return
   }
 
-  if (state === "cached" || MODE === "cached") {
-    if (messages.length > MAX_TOTAL_CACHED) {
-      const kept = messages.slice(messages.length - MAX_TOTAL_CACHED)
-      messages.splice(0, messages.length, ...kept)
-    }
-    pending.set(sessionID, { beforeChars, afterChars: roughChars(messages), beforeMsgs, afterMsgs: messages.length, shrunkTools })
-    return
-  }
-
-  if (MODE === "trim") {
-    shrunkTools = digestOldToolOutputs(messages as unknown as { info: { role: string }; parts: DigestedPart[] }[], KEEP_TAIL_MSGS)
-  }
-
-  const mult = state === "unknown" ? OLD_MULT : 1
+  const cached = state === "cached" || MODE === "cached"
+  const mult = cached ? CACHED_MULT : state === "unknown" ? OLD_MULT : 1
   const roles: Record<string, number> = {
     user: MAX_USER * mult,
     assistant: MAX_ASSISTANT * mult,
     tool: MAX_TOOL * mult,
   }
-  const totalCap = state === "unknown" ? MAX_TOTAL * OLD_MULT : MAX_TOTAL
+  const totalCap = cached ? MAX_TOTAL_CACHED : state === "unknown" ? MAX_TOTAL * OLD_MULT : MAX_TOTAL
+
+  // Digest oversized tool outputs first: application code, captures, and build
+  // logs balloon the context even when the message count stays small, so this
+  // is where most real savings come from in warm-cache sessions. Always on.
+  shrunkTools = digestOldToolOutputs(messages as unknown as { info: { role: string }; parts: DigestedPart[] }[], KEEP_TAIL_MSGS)
+
   const preserved = messages.slice(0, Math.min(PRESERVE_FIRST, messages.length))
   const keptTail: { info: { role: string }; parts: unknown[] }[] = []
   const counts = { user: 0, assistant: 0, tool: 0 }
@@ -277,8 +276,10 @@ function trimMessages(sessionID: string, messages: { info: { role: string }; par
 }
 
 export async function plugin(_input: PluginInput, _options: PluginOptions): Promise<Hooks> {
-  console.log(`[token-min] mode=${MODE} user=${MAX_USER} assistant=${MAX_ASSISTANT} tool=${MAX_TOOL} total=${MAX_TOTAL} cached_total=${MAX_TOTAL_CACHED} preserve=${PRESERVE_FIRST} min=${MIN_KEEP} old_mult=${OLD_MULT} ingest_digest=${TOOL_DIGEST_BYTES}B`)
-  console.log(`[token-min] ledger: ${ledgerPath}`)
+  if (LOG) {
+    console.log(`[token-min] mode=${MODE} user=${MAX_USER} assistant=${MAX_ASSISTANT} tool=${MAX_TOOL} total=${MAX_TOTAL} cached_total=${MAX_TOTAL_CACHED} preserve=${PRESERVE_FIRST} min=${MIN_KEEP} old_mult=${OLD_MULT} ingest_digest=${TOOL_DIGEST_BYTES}B`)
+    console.log(`[token-min] ledger: ${ledgerPath}`)
+  }
 
   for (const rec of readLedger()) {
     if (rec.model !== "unknown" && !sessionModels.has(rec.sessionID)) sessionModels.set(rec.sessionID, rec.model)
@@ -321,27 +322,29 @@ export async function plugin(_input: PluginInput, _options: PluginOptions): Prom
             const cost = part.cost ?? 0
             const t = part.tokens ?? {}
             const cacheRead = t.cache?.read ?? 0
+            const pend = pending.get(sessionID)
+            let beforeTok = 0
+            let afterTok = 0
+            let estSaved = 0
+            let savedPct = 0
+            if (pend && pend.beforeChars > 0) {
+              beforeTok = Math.max(0, Math.round(pend.beforeChars / CHARS_PER_TOKEN))
+              afterTok = Math.max(0, Math.round(pend.afterChars / CHARS_PER_TOKEN))
+              estSaved = beforeTok - afterTok
+              if (estSaved > 0) savedPct = Math.round((estSaved / beforeTok) * 100)
+            }
             const tokens: StepTokens = {
               input: t.input ?? 0,
               output: t.output ?? 0,
               reasoning: t.reasoning ?? 0,
               cacheRead,
               cacheWrite: t.cache?.write ?? 0,
-              estSaved: 0,
+              estSaved: Math.max(0, estSaved),
+              beforeTok,
+              afterTok,
             }
 
             trackCache(sessionID, cacheRead)
-
-            const pend = pending.get(sessionID)
-            let estSaved = 0
-            let savedPct = 0
-            if (pend && pend.beforeChars > 0) {
-              const beforeTok = Math.max(1, Math.round(pend.beforeChars / CHARS_PER_TOKEN))
-              const afterTok = Math.max(1, Math.round(pend.afterChars / CHARS_PER_TOKEN))
-              estSaved = beforeTok - afterTok
-              if (estSaved > 0) savedPct = Math.round((estSaved / beforeTok) * 100)
-            }
-            tokens.estSaved = Math.max(0, estSaved)
             pending.delete(sessionID)
 
             const prev = sessionTotals.get(sessionID)

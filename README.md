@@ -76,6 +76,11 @@ cp plugins/token-min.ts   ~/.config/opencode/plugins/
 # TUI plugin (the honest Context box on the right)
 cp tui/token-min.tsx      ~/.config/opencode/tui/
 
+# config file for sidebar (registers token-min, renders the honest Context box)
+cp tui.json               ~/.config/opencode/tui.json
+# note: if you already have a tui.json (e.g. other TUI plugins), merge the
+# "plugin" arrays instead of overwriting it.
+
 # restart opencode, or just /tui --dev to hot-reload the sidebar
 ```
 
@@ -84,20 +89,31 @@ constants at the top of `plugins/token-min.ts`:
 
 | Constant | Default | Meaning |
 | --- | --- | --- |
-| `MODE` | `"watch"` | `watch` = measure only (safe). `trim` = digest tool dumps + `cached` = also enforce budgets |
-| `MAX_USER` / `MAX_ASSISTANT` / `MAX_TOOL` | `14 / 18 / 14` | max messages per role kept in the tail |
-| `MAX_TOTAL` | `36` | total messages kept (history + tail) |
-| `MAX_TOTAL_CACHED` | `90` | cap when the session has an active cache |
-| `PRESERVE_FIRST` | `2` | instructions/system messages never trimmed |
-| `MIN_KEEP` | `6` | floor regardless of budgets |
+| `MODE` | `"auto"` | `auto` (default) = trim + digest every step. `watch` = measure only (safe). `trim` = same as auto. `cached` = trims + widens budgets unconditionally |
+| `MAX_USER` / `MAX_ASSISTANT` / `MAX_TOOL` | `12 / 12 / 12` | max messages per role kept in the tail |
+| `MAX_TOTAL` | `30` | total messages kept (history + tail) |
+| `MAX_TOTAL_CACHED` | `60` | tail cap when the session has an active cache |
+| `CACHED_MULT` | `2` | multiplier applied to per-role budgets once a cache is confirmed |
+| `PRESERVE_FIRST` | `3` | instructions/system messages never trimmed |
+| `MIN_KEEP` | `2` | floor regardless of budgets |
 | `OLD_MULT` | `2` | loosen budgets while cache state is unknown |
-| `TOOL_DIGEST_BYTES` | `1200` | output limit before a tool part becomes a digest |
-| `KEEP_TAIL_MSGS` | `6` | recent tool parts skipped by digesting |
+| `CHARS_PER_TOKEN` | `4` | chars÷this ≈ tokens for saved estimates |
+| `KEEP_TAIL_MSGS` | `4` | recent tool parts skipped by digesting |
+| `TOOL_DIGEST_BYTES` | `4000` | output limit before a tool part becomes a digest |
+| `TOOL_DIGEST_HEAD` / `TOOL_DIGEST_TAIL` | `800 / 800` | chars kept at each end when digesting |
 
-Start in `watch` mode: it only *measures* — you can see real `~saved` numbers
-before it ever trims a single token. Then flip `MODE = "trim"` (digest tool
-outputs) and finally `"cached"` (full budgets) once the numbers make you
-comfortable.
+The default `auto` mode trims and digests from the very first install. If you'd
+rather *measure first*, set `MODE = "watch"` — it only records `~saved` numbers
+without touching a single token. Sessions that confirm an active cache switch
+to `cached` budgets (`MAX_TOTAL_CACHED` / `CACHED_MULT`): keeping more of the
+warm prefix intact is cheaper than forcing a rewrite, so trimming steps aside.
+
+## 🛡 Quiet mode
+
+Set `TOKEN_MIN_LOG=1` (or `true`) to enable per-step console output. By
+default the plugin is quiet — `LOG` is opt-in, so nothing prints unless you ask.
+The ledger (`token-usage.jsonl`) is always written regardless. (Output appears
+in the TUI status area above the chat field when enabled.)
 
 ---
 
@@ -125,10 +141,11 @@ comfortable.
 * **Measure first.** Every step records chars-before vs. chars-after and
   converts the difference to an estimated token saving (`chars/4 ≈ tokens`),
   plus cache-read tokens when the provider reports them.
-* **Cache-aware.** While the cache state of a session is unknown the budgets
-  are doubled (`OLD_MULT`), so trimming can't silently break a warm cache. If
-  the session is confirmed cached, `MAX_TOTAL_CACHED` keeps context lower
-  anyway — fewer tokens to re-send means cheaper per step, cached or not.
+* **Cache-aware.** While the cache state of a session is unknown the budgets are
+  doubled (`OLD_MULT`), so trimming can't silently break a warm cache. Once the
+  session confirms an active cache the per-role budgets widen again (`CACHED_MULT`)
+  and the tail targets `MAX_TOTAL_CACHED`: keeping the warm prefix intact beats
+  forcing a rewrite, since re-sending cached tokens is far cheaper than new ones.
 * **Tool outputs get digested, not deleted.** Oversized outputs are rewritten
   to a short digest (`[digested N-byte tool output → summary]`), keeping the
   tail of the conversation *useful* instead of just small.
@@ -165,8 +182,9 @@ $ opencode /tui --dev     # hot-reload the sidebar while you tweak
 * **Estimates, not invoices.** trimmed savings use a chars→token heuristic and
   a tool-digest heuristic; cache-read tokens come straight from the provider.
   Numbers are for *watching the trend*, not for accounting.
-* **`watch` mode proves it before it changes anything.** Nothing is ever
-  trimmed until you set `MODE = "trim"` / `"cached"`.
+* **The default (`auto`) trims from day one.** If you want to *measure first*,
+  set `MODE = "watch"` — nothing is touched until you opt in with `trim` /
+  `cached`.
 * **Cache safety is measured, not guaranteed** — the plugin errs on the side of
   *smaller* context, which is never wrong on cost.
 
@@ -179,8 +197,10 @@ tail -5 ~/.local/share/opencode/token-usage.jsonl
 ```
 
 One row per step-finish: `ts, sessionID, taskID, messageID, model, cost, tokens
-{input, output, reasoning, cacheRead, cacheWrite, estSaved}`. Sum `estSaved`
-per `taskID` and you have exactly what a long session really burned.
+{input, output, reasoning, cacheRead, cacheWrite, estSaved, beforeTok, afterTok}`.
+`estSaved` (≈ chars-saved ÷ 4) is conservative and floored at 0; `beforeTok` /
+`afterTok` are estimates of the prompt size before vs. after trimming. Sum
+`estSaved` per `taskID` and you have exactly what a long session really burned.
 
 ---
 
@@ -188,7 +208,7 @@ per `taskID` and you have exactly what a long session really burned.
 
 ```bash
 bun build plugins/token-min.ts --outdir /tmp/token-min-build   # syntax check
-# then: mark MODE = "watch" → run a long session → inspect the ledger
+# then: run a long session → inspect the ledger (MODE="watch" to observe first)
 ```
 
 ---

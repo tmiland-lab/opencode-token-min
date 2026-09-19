@@ -20,20 +20,24 @@ token-optimization guide: cut re-sent-context cost 80–99%.
 ## Layout
 - `plugins/token-min.ts` — server plugin (transform hook, ledger, `cost` tool)
 - `tui/token-min.tsx` — sidebar plugin (reads `token-usage.jsonl`)
+- `tui.json` — TUI plugin registration file (referenced by the README install step)
 - `assets/token-min-overview.svg` — README illustration (re-render PNG via `magick`)
 
 ## Conventions (keep these synced)
 - **These two files MUST stay in byte-sync with the live install:**
   `~/.config/opencode/plugins/token-min.ts` and `~/.config/opencode/tui/token-min.tsx`.
   Any edit here must be copied back; any fix made live must be copied here.
-- Modes: `"watch"` (measure only) → `"trim"` (digest tool outputs) → `"cached"` (full budgets).
-  Default stays conservative; README documents the mode ladder.
+- Modes: `"auto"` (default; trims + digests) / `"watch"` (measure only, mutates
+  nothing) / `"trim"` (same as auto) / `"cached"` (trims + widens budgets
+  unconditionally). README documents the mode ladder.
 - Decimals:
-  - `estSaved` = chars diff ÷ 4.15, rounded, floored at 0.
-  - Cached-mode tool digest delta uses full char diff (rewritten output).
-  - Per-step `estSaved` never underestimates; conservative is the point.
+  - `estSaved` = `beforeTok - afterTok`, floored at 0. Each `*Tok` = chars ÷
+    `CHARS_PER_TOKEN` (~4), rounded. Constrained by design (chars ≈ upper bound
+    on tokens, never underestimates); conservative is the point.
+  - Tool-digest delta uses full char diff (rewritten output). Digests are
+    always on in auto/trim/cached; `watch` records chars only, mutates nothing.
 - Ledger format: JSONL one row per step-finish, keys
-  `ts, sessionID, taskID, messageID, model, cost, tokens{input,output,reasoning,cacheRead,cacheWrite,estSaved}`.
+  `ts, sessionID, taskID, messageID, model, cost, tokens{input,output,reasoning,cacheRead,cacheWrite,estSaved,beforeTok,afterTok}`.
   `taskID` = originating user message id, so "saved on the last task" is a real number.
 - TUI box order (stable): Context heading → tokens → % used → $ spent → ~tokens
   saved → % saved → ~tokens saved · last task. Tests grep these in raw captures.
