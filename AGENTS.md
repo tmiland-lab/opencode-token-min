@@ -40,7 +40,8 @@ token-optimization guide: cut re-sent-context cost 80–99%.
   `ts, sessionID, taskID, messageID, model, cost, tokens{input,output,reasoning,cacheRead,cacheWrite,estSaved,beforeTok,afterTok}`.
   `taskID` = originating user message id, so "saved on the last task" is a real number.
 - TUI box order (stable): Context heading → tokens → % used → $ spent → ~tokens
-  saved → % saved → ~tokens saved · last task. Tests grep these in raw captures.
+  saved → % saved → ~tokens saved · last task → % saved (last task). Tests grep
+  these in raw captures.
 - Emoji policy: minimal, only in this repo's own copy (not in the plugin source).
 
 ## Publish hygiene (public repo)

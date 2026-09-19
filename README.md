@@ -177,6 +177,22 @@ $ opencode /tui --dev     # hot-reload the sidebar while you tweak
 
 ---
 
+## 📈 Measured, not just modeled
+
+Numbers from live sessions (default `auto` mode):
+
+| Run | Input tokens sent per step |
+| --- | --- |
+| No token-min, other context plugin active | **441,934** (one request) · a heavy test session sustained **700k–838k** on *every* step |
+| Same-class session, token-min `auto` | **~4,000** shipped (+ ~14k cache-read that stays warm) |
+
+Where a pluginless/other-plugin step was about to ship ~178k tokens, token-min
+sent ~3k — the ledger logged `estSaved ≈ 175k` per step, i.e. a **~98% cut**.
+The gap is why this exists: the untrimmed case re-invoices the entire session
+every keystroke; the trimmed case only pays for what actually changed.
+
+---
+
 ## ⚠️ Caveats
 
 * **Estimates, not invoices.** trimmed savings use a chars→token heuristic and

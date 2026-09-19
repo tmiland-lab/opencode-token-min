@@ -31,10 +31,10 @@ function ledgerPath(): string {
   return path.join(base, "token-usage.jsonl")
 }
 
-function sessionSaved(sessionID: string): { saved: number; lastTask: number; latest?: LedgerRow } {
+function sessionSaved(sessionID: string): { saved: number; lastTask: number; rows: number; latest?: LedgerRow } {
   try {
     const file = ledgerPath()
-    if (!existsSync(file)) return { saved: 0, lastTask: 0 }
+    if (!existsSync(file)) return { saved: 0, lastTask: 0, rows: 0 }
     const rows = readFileSync(file, "utf8")
       .split("\n")
       .filter(Boolean)
@@ -56,9 +56,9 @@ function sessionSaved(sessionID: string): { saved: number; lastTask: number; lat
         if ((row.taskID ?? row.messageID) === lastTaskID) lastTask += row.tokens.estSaved ?? 0
       }
     }
-    return { saved, lastTask, latest: last }
+    return { saved, lastTask, rows: rows.length, latest: last }
   } catch {
-    return { saved: 0, lastTask: 0 }
+    return { saved: 0, lastTask: 0, rows: 0 }
   }
 }
 
@@ -77,18 +77,14 @@ const tui: TuiPlugin = async (api) => {
         const session = createMemo(() => api.state.session.get(props.session_id))
         const cost = createMemo(() => session()?.cost ?? 0)
 
-        const state = createMemo(() => {
+        const tokens = createMemo(() => {
           const last = msg().findLast((item): item is AssistantMessage => item.role === "assistant" && item.tokens.output > 0)
           if (!last) {
-            return { tokens: 0, percent: null }
+            return 0
           }
-          const tokens =
+          return (
             last.tokens.input + last.tokens.output + last.tokens.reasoning + last.tokens.cache.read + last.tokens.cache.write
-          const model = api.state.provider.find((item) => item.id === last.providerID)?.models[last.modelID]
-          return {
-            tokens,
-            percent: model?.limit.context ? Math.round((tokens / model.limit.context) * 100) : null,
-          }
+          )
         })
 
         const saved = createMemo(() => {
@@ -98,23 +94,19 @@ const tui: TuiPlugin = async (api) => {
 
         return (
           <box>
-            <text fg={theme().text}>
-              <b>Context</b>
+          <text fg={theme().text}>
+            <b>Savings</b>
+          </text>
+            <text fg={theme().textMuted}>~{saved().saved.toLocaleString()} tokens saved</text>
+            <text fg={theme().textMuted}>
+              {Math.round((saved().saved / Math.max(saved().saved + tokens(), 1)) * 100)}% saved
             </text>
-            <text fg={theme().textMuted}>{state().tokens.toLocaleString()} tokens</text>
-            <text fg={theme().textMuted}>{state().percent ?? 0}% used</text>
-            <text fg={theme().textMuted}>{money.format(cost())} spent</text>
-            {saved().saved > 0 ? (
-              <text fg={theme().textMuted}>~{saved().saved.toLocaleString()} tokens saved</text>
-            ) : null}
-            {saved().saved > 0 && state().tokens > 0 ? (
-              <text fg={theme().textMuted}>
-                {Math.round((saved().saved / (saved().saved + state().tokens)) * 100)}% saved
-              </text>
-            ) : null}
-            {saved().lastTask > 0 ? (
-              <text fg={theme().textMuted}>~{saved().lastTask.toLocaleString()} tokens saved · last task</text>
-            ) : null}
+            <text fg={theme().textMuted}>
+              ~{saved().lastTask.toLocaleString()} tokens saved · last task
+            </text>
+            <text fg={theme().textMuted}>
+             {Math.round((saved().lastTask / Math.max(saved().lastTask + tokens(), 1)) * 100)}% saved
+            </text>
           </box>
         )
       },

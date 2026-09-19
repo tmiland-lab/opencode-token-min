@@ -75,8 +75,7 @@
   <text x="640" y="308" fill="#7aa2f7" font-size="13">~18,240 tokens saved</text>
   <text x="640" y="334" fill="#9ece6a" font-size="13">88% saved</text>
   <text x="640" y="360" fill="#f7768e" font-size="13">~5,030 tokens saved · last task</text>
-  <text x="640" y="384" fill="#8b90a5" font-size="11">session vs the last task you ran</text>
-  <text x="640" y="400" fill="#8b90a5" font-size="11">(the two numbers you actually wanted)</text>
+  <text x="640" y="384" fill="#9ece6a" font-size="13">88% saved</text>
 
   <!-- right annotation -->
   <line x1="1002" y1="230" x2="1024" y2="230" stroke="#5d6478"/>
