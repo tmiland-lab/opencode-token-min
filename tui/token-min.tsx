@@ -3,7 +3,7 @@ import { createMemo, createSignal } from "solid-js"
 import { readFileSync, existsSync } from "node:fs"
 import path from "node:path"
 
-const id = "token-min:sidebar-context"
+const id = "tmiland-lab/opencode-token-min"
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
