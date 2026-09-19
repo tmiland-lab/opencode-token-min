@@ -39,7 +39,7 @@ TUI plugin turns that into the Context box you actually wanted: tokens, % used,
 $ spent, total saved, % saved — and now **saved on the last task**, not a
 blurry lifetime total.
 
-The leading goal, per the awesome LLM token-optimization guide: **cut the
+The leading goal, per the [awesome LLM token-optimization guide](https://github.com/pleasedodisturb/awesome-llm-token-optimization): **cut the
 re-sent-context bill by 80–99%.** That is ambitious, measurable, and exactly
 what long sessions need.
 
