@@ -1,6 +1,6 @@
 {
   "name": "opencode-token-min",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "license": "MIT",
   "description": "Cache-aware context trimming plugin for opencode — stop long sessions from re-billing your whole history every step.",
