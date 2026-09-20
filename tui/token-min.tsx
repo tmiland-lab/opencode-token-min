@@ -1,5 +1,6 @@
 import type { TuiPlugin } from "@opencode-ai/plugin/tui"
 import { createMemo, createSignal } from "solid-js"
+import { jsxDEV } from "@opentui/solid/jsx-dev-runtime"
 import { readFileSync, existsSync } from "node:fs"
 import path from "node:path"
 
@@ -93,23 +94,30 @@ const tui: TuiPlugin = async (api) => {
         const pct = (savedVal: number, before: number) =>
           before > 0 ? Math.min(100, Math.round((savedVal / before) * 100)) : 0
 
-        return (
-          <box>
-          <text fg={theme().text}>
-            <b>Savings</b>
-          </text>
-            <text fg={theme().textMuted}>~{saved().saved.toLocaleString()} tokens saved</text>
-            <text fg={theme().textMuted}>
-              {pct(saved().saved, saved().before)}% saved
-            </text>
-            <text fg={theme().textMuted}>
-              ~{saved().lastTask.toLocaleString()} tokens saved · last task
-            </text>
-            <text fg={theme().textMuted}>
-              {pct(saved().lastTask, saved().lastBefore)}% saved
-            </text>
-          </box>
-        )
+        return jsxDEV("box", {
+          children: [
+            jsxDEV("text", {
+              fg: theme().text,
+              children: [jsxDEV("b", { children: "Savings" })],
+            }),
+            jsxDEV("text", {
+              fg: theme().textMuted,
+              children: `~${saved().saved.toLocaleString()} tokens saved`,
+            }),
+            jsxDEV("text", {
+              fg: theme().textMuted,
+              children: `${pct(saved().saved, saved().before)}% saved`,
+            }),
+            jsxDEV("text", {
+              fg: theme().textMuted,
+              children: `~${saved().lastTask.toLocaleString()} tokens saved · last task`,
+            }),
+            jsxDEV("text", {
+              fg: theme().textMuted,
+              children: `${pct(saved().lastTask, saved().lastBefore)}% saved`,
+            }),
+          ],
+        })
       },
     },
   })

@@ -13,9 +13,11 @@ token-optimization guide: cut re-sent-context cost 80–99%.
 
 ## Commands
 - `bun install` — pull the opencode plugin/sdk dev deps
-- `bun build --target=bun plugins/token-min.ts --outdir /tmp/b` — syntax check server plugin (must be OK)
-- `bun build --target=bun tui/token-min.tsx --outdir /tmp/b` — syntax check TUI plugin (must be OK)
+- `bun install` — pull the opencode plugin/sdk dev deps
 - `bun run check` — the npm-entry syntax checks (`src/server.ts` + `tui/token-min.tsx`)
+  The tui build passes `--external @opentui/solid @opentui/solid/* @opentui/core* solid-js`:
+  the runtime provides these virtually and @opentui/core's platform-binary imports
+  (`@opentui/core-darwin-x64` etc.) are optional-per-platform, so a plain bundle fails.
 - `npm pack --dry-run` — verify tarball contents before publishing
 - `npm publish` — publish `opencode-token-min` (unscoped ⇒ public)
 - No test suite; verification is a live `opencode /tui --dev` against a long session
@@ -56,6 +58,13 @@ token-optimization guide: cut re-sent-context cost 80–99%.
   saved → % saved → ~tokens saved · last task → % saved (last task). Tests grep
   these in raw captures.
 - Emoji policy: minimal, only in this repo's own copy (not in the plugin source).
+- TUI runs **JSX-free by design**: build elements with `jsxDEV(...)` imported from
+  `@opentui/solid/jsx-dev-runtime` (a runtime-provided virtual module). Raw JSX
+  syntax makes bun's native transform inject `import ... from
+  "@opentui/solid/jsx-dev-runtime"`, which resolves natively relative to the
+  plugin file and fails for npm-installed plugins (`~/.cache/opencode/packages/<pkg>@<ver>/node_modules/<pkg>/`
+  has no upward @opentui). Explicit `jsxDEV` imports are rewritten by the opencode
+  runtime-plugin loader. `@opentui/solid` is a devDependency only (types/build).
 
 ## Publish hygiene (public repo)
 - `node_modules/`, `*.jsonl`, `.env.local` are gitignored — never `git add -f`.
