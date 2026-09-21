@@ -203,6 +203,47 @@ sent ~3k — the ledger logged `estSaved ≈ 175k` per step, i.e. a **~98% cut**
 The gap is why this exists: the untrimmed case re-invoices the entire session
 every keystroke; the trimmed case only pays for what actually changed.
 
+One real session (`auto` mode, GLM-5.3), names and plan details kept out. A
+second same-afternoon session was excluded from the math: it ran on a
+different provider with different rates, so its numbers don't compare.
+
+| Session | Timeframe (UTC) | GLM cost | input sent | cache-read | est. tokens saved | est. $ saved* | % saved† |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Private site + API + apps build | Sep 20, 16:06–19:45, still running | $17.86 | 10.2M | 9.4M | 83.6M | $25.74 | ~92% |
+
+*\*$ saved = est. saved tokens × the GLM cache-read rate (~$0.31/M, fitted from
+this session's own ledger rows) — the cheapest possible re-send, so the figure
+is conservative. At the session's actual blended billed rate (~$0.91/M) the
+same tokens are ~$76; at full input price ~$118.*
+†*% saved = ΣestSaved ÷ ΣbeforeTok, zero-trim rows included, so this is
+conservative.* The session billed ~19.5M effective tokens (input + cache-read)
+ while the same steps would have re-sent ~91M context tokens — **~92% of the
+ re-sent context never reached the API**, and the context that did ship was
+ only ~7.7M tokens.
+
+### Scaled to a full-time agent
+
+Take that one session — ~3.6 h on the clock, $17.86 billed, ~$26 saved at the
+cheapest re-send rate — and run it like a job: 8-hour day, 7-day week, 4-week
+month, 12-month year. That's 2,688 hours, about 29% more than a standard
+40-h-week year (2,080 h). Linear extrapolation from one session, so treat it
+as the shape of the number, not a quote:
+
+| Period | Hours | Billed with token-min | $ saved (floor*) | $ saved (blended) | $ saved (full input) |
+| --- | --- | --- | --- | --- | --- |
+| One day (8 h) | 8 | $39 | $56 | $167 | $259 |
+| One week (7 days) | 56 | $274 | $395 | $1,166 | $1,810 |
+| One month (4 weeks) | 224 | $1,096 | $1,580 | $4,664 | $7,242 |
+| One year (12 months) | 2,688 | ~$13,150 | ~$19,000 | ~$56,000 | ~$87,000 |
+
+*\*Floor / blended / full input reuse the per-session rates from the table
+above: the trimmed context priced at cache-read (~$0.31/M), at the session's
+actual blended billed rate (~$0.91/M), and at full input price (~$1.43/M) —
+the cheapest, the likely, and the no-cache worst case. Savings scale with
+context weight: tool-heavy agentic sessions like this one trim the most;
+chat-shaped sessions save less. The honest year-end comparison: ~$13k billed
+with token-min against ~$19k–$87k of context that was never re-sent.*
+
 ---
 
 ## ⚠️ Caveats
